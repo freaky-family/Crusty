@@ -6,22 +6,22 @@
     holding buffers for the duration of a data transfer."
 )]
 
-use core::io;
-use core::ptr::read;
+use core::fmt::Write;
 
 use esp_hal::clock::CpuClock;
 use esp_hal::delay::Delay;
-use esp_hal::main;
+use esp_hal::{main, uart};
 
 // LEDC
 use esp_hal::gpio::DriveMode;
 use esp_hal::ledc::channel::ChannelIFace;
 use esp_hal::ledc::timer::TimerIFace;
 use esp_hal::ledc::{HighSpeed, Ledc, channel, timer};
+use esp_hal::uart::Config;
+use esp_hal::{uart::Uart};
 use esp_hal::time::Rate;
 
 use embedded_hal::pwm::SetDutyCycle;
-use esp_println::println;
 
 #[panic_handler]
 fn panic(_: &core::panic::PanicInfo) -> ! {
@@ -76,22 +76,36 @@ fn main() -> ! {
 
     let mut angle:i32 = 0;
 
-
+    let mut uart0 = Uart::new(peripherals.UART0, Config::default()).unwrap();
+    let mut buffer: [u8; _] = [0; 50];
+    let mut size = 0;
     loop {
-        println!("Type shit");
-        for deg in 0..=180 {
-            let duty = duty_from_angle(deg, min_duty, duty_gap);
-            channel0.set_duty_cycle(duty).unwrap();
-            delay.delay_millis(10);
-        }
-        delay.delay_millis(500);
+        // println!("Type shit");
+        // delay.delay_millis(500);
 
-        for deg in (0..=180).rev() {
-            let duty = duty_from_angle(deg, min_duty, duty_gap);
-            channel0.set_duty_cycle(duty).unwrap();
-            delay.delay_millis(10);
-        }
-        delay.delay_millis(500);
+        // delay.delay_millis(500);
+        // writeln!(uart0, "Hello world");
+
+        let mut letter = [0; 1];
+        match uart0.read(&mut letter) {
+            Ok(_) => {
+                writeln!(uart0, "{:?}", letter);
+                if letter[0] == 97 {
+                    for deg in 0..=180 {
+                        let duty = duty_from_angle(deg, min_duty, duty_gap);
+                        channel0.set_duty_cycle(duty).unwrap();
+                        delay.delay_millis(10);
+                    }
+                } else if letter[0] == 122 {
+                    for deg in (0..=180).rev() {
+                        let duty = duty_from_angle(deg, min_duty, duty_gap);
+                        channel0.set_duty_cycle(duty).unwrap();
+                        delay.delay_millis(10);
+                    }
+                }
+            },
+            Err(_) => {},
+        };
     }
 }
 
