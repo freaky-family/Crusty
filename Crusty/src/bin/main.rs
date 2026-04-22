@@ -39,8 +39,11 @@ fn main() -> ! {
     let config = esp_hal::Config::default().with_cpu_clock(CpuClock::max());
     let peripherals = esp_hal::init(config);
 
-    let mut servo = peripherals.GPIO2;
+    let mut servo1 = peripherals.GPIO2;
+    let mut servo2 = peripherals.GPIO4;
+    let mut servo3 = peripherals.GPIO16;
     let ledc = Ledc::new(peripherals.LEDC);
+    // let ledc1 = Ledc::new(peripherals.LEDC);
 
     let mut hstimer0 = ledc.timer::<HighSpeed>(timer::Number::Timer0);
     hstimer0
@@ -51,8 +54,24 @@ fn main() -> ! {
         })
         .unwrap();
 
-    let mut channel0 = ledc.channel(channel::Number::Channel0, servo.reborrow());
+    let mut channel0 = ledc.channel(channel::Number::Channel0, servo1.reborrow());
+    let mut channel1 = ledc.channel(channel::Number::Channel1, servo2.reborrow());
+    let mut channel2 = ledc.channel(channel::Number::Channel2, servo3.reborrow());
     channel0
+        .configure(channel::config::Config {
+            timer: &hstimer0,
+            duty_pct: 10,
+            drive_mode: DriveMode::PushPull,
+        })
+        .unwrap();
+    channel1
+        .configure(channel::config::Config {
+            timer: &hstimer0,
+            duty_pct: 10,
+            drive_mode: DriveMode::PushPull,
+        })
+        .unwrap();
+    channel2
         .configure(channel::config::Config {
             timer: &hstimer0,
             duty_pct: 10,
@@ -74,7 +93,7 @@ fn main() -> ! {
     let duty_gap = max_duty - min_duty;
 
 
-    let mut angle:i32 = 0;
+    let mut angle:i32 = 90;
 
     let mut uart0 = Uart::new(peripherals.UART0, Config::default()).unwrap();
     let mut buffer: [u8; _] = [0; 50];
@@ -91,15 +110,29 @@ fn main() -> ! {
             Ok(_) => {
                 writeln!(uart0, "{:?}", letter);
                 if letter[0] == 97 {
-                    for deg in 0..=180 {
+                    for deg in 5..=115 {
                         let duty = duty_from_angle(deg, min_duty, duty_gap);
                         channel0.set_duty_cycle(duty).unwrap();
+                        channel1.set_duty_cycle(duty).unwrap();
                         delay.delay_millis(10);
                     }
                 } else if letter[0] == 122 {
-                    for deg in (0..=180).rev() {
+                    for deg in (5..=115).rev() {
                         let duty = duty_from_angle(deg, min_duty, duty_gap);
                         channel0.set_duty_cycle(duty).unwrap();
+                        channel1.set_duty_cycle(duty).unwrap();
+                        delay.delay_millis(10);
+                    }
+                } else if letter[0] == 100 {
+                    for deg in (5..=115).rev() {
+                        let duty = duty_from_angle(deg, min_duty, duty_gap);
+                        channel2.set_duty_cycle(duty).unwrap();
+                        delay.delay_millis(10);
+                    }
+                } else if letter[0] == 113 {
+                    for deg in 5..=115 {
+                        let duty = duty_from_angle(deg, min_duty, duty_gap);
+                        channel2.set_duty_cycle(duty).unwrap();
                         delay.delay_millis(10);
                     }
                 }
