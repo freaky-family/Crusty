@@ -22,7 +22,28 @@ use esp_hal::{uart::Uart};
 use esp_hal::time::Rate;
 
 use embedded_hal::pwm::SetDutyCycle;
+use defmt::info;
+use embassy_executor::Spawner;
+use embassy_time::{Duration, Timer};
 
+use esp_hal::timer::timg::TimerGroup;
+use esp_println as _;
+
+// I2C
+use esp_hal::i2c::master::Config as I2cConfig; // for convenience, importing as alias
+use esp_hal::i2c::master::I2c;
+
+// OLED
+use ssd1306::{I2CDisplayInterface, Ssd1306Async, prelude::*};
+
+// Embedded Graphics
+use embedded_graphics::{
+    mono_font::{MonoTextStyleBuilder, ascii::FONT_6X10},
+    pixelcolor::BinaryColor,
+    prelude::Point,
+    prelude::*,
+    text::{Baseline, Text},
+};
 #[panic_handler]
 fn panic(_: &core::panic::PanicInfo) -> ! {
     loop {}
@@ -70,7 +91,7 @@ fn main() -> ! {
         })
         .unwrap();
 
-    let delay = Delay::new();
+    let _delay = Delay::new();
 
     let max_duty_cycle = channel0.max_duty_cycle() as u32;
 
@@ -84,51 +105,53 @@ fn main() -> ! {
     let duty_gap = max_duty - min_duty;
 
 
-    let mut angle:i32 = 90;
+    // let mut angle:i32 = 90;
 
     let mut uart0 = Uart::new(peripherals.UART0, Config::default()).unwrap();
-    let mut buffer: [u8; _] = [0; 50];
-    let mut size = 0;
+    // TEST
+    let mut uart1 = Uart::new(peripherals.UART1, Config::default()).unwrap();
+    // let mut buffer: [u8; _] = [0; 50];
+    // let mut size = 0;
     loop {
         // println!("Type shit");
-        // delay.delay_millis(500);
+        _delay.delay_millis(500);
 
         // delay.delay_millis(500);
-        // writeln!(uart0, "Hello world");
+        writeln!(uart0, "Hello world");
 
         let mut letter = [0; 1];
-        match uart0.read(&mut letter) {
+        match uart1.read(&mut letter) {
             Ok(_) => {
-                writeln!(uart0, "{:?}", letter);
-                if letter[0] == 115 {
-                    // S
-                    for deg in 0..=180 {
-                        let duty = duty_from_angle(deg, min_duty, duty_gap);
-                        channel0.set_duty_cycle(duty).unwrap();
-                        // delay.delay_millis(10);
-                    }
-                } else if letter[0] == 122 {
-                    // Z
-                    for deg in (0..=180).rev() {
-                        let duty = duty_from_angle(deg, min_duty, duty_gap);
-                        channel0.set_duty_cycle(duty).unwrap();
-                        // delay.delay_millis(10);
-                    }
-                } else if letter[0] == 113 {
-                    // Q
-                    for deg in (0..=180).rev() {
-                        let duty = duty_from_angle(deg, min_duty, duty_gap);
-                        channel1.set_duty_cycle(duty).unwrap();
-                        // delay.delay_millis(10);
-                    }
-                } else if letter[0] == 100 {
-                    // D
-                    for deg in 0..=180 {
-                        let duty = duty_from_angle(deg, min_duty, duty_gap);
-                        channel1.set_duty_cycle(duty).unwrap();
-                        // delay.delay_millis(10);
-                    }
-                }
+                let _ = writeln!(uart0, "{:?}", letter);
+            //     if letter[0] == 115 {
+            //         // S
+            //         for deg in 0..=180 {
+            //             let duty = duty_from_angle(deg, min_duty, duty_gap);
+            //             channel0.set_duty_cycle(duty).unwrap();
+            //             // delay.delay_millis(10);
+            //         }
+            //     } else if letter[0] == 122 {
+            //         // Z
+            //         for deg in (0..=180).rev() {
+            //             let duty = duty_from_angle(deg, min_duty, duty_gap);
+            //             channel0.set_duty_cycle(duty).unwrap();
+            //             // delay.delay_millis(10);
+            //         }
+            //     } else if letter[0] == 113 {
+            //         // Q
+            //         for deg in (0..=180).rev() {
+            //             let duty = duty_from_angle(deg, min_duty, duty_gap);
+            //             channel1.set_duty_cycle(duty).unwrap();
+            //             // delay.delay_millis(10);
+            //         }
+            //     } else if letter[0] == 100 {
+            //         // D
+            //         for deg in 0..=180 {
+            //             let duty = duty_from_angle(deg, min_duty, duty_gap);
+            //             channel1.set_duty_cycle(duty).unwrap();
+            //             // delay.delay_millis(10);
+            //         }
+            //     }
             },
             Err(_) => {},
         };
@@ -139,6 +162,12 @@ fn duty_from_angle(deg: u32, min_duty: u32, duty_gap: u32) -> u16 {
     let duty = min_duty + ((deg * duty_gap) / 180);
     duty as u16
 }
+
+
+
+
+
+
 
 
 // #![no_std]
@@ -178,7 +207,7 @@ fn duty_from_angle(deg: u32, min_duty: u32, duty_gap: u32) -> u16 {
 //     let config = esp_hal::Config::default().with_cpu_clock(CpuClock::max());
 //     let peripherals = esp_hal::init(config);
 
-//     let mut servo = peripherals.GPIO33;
+//     let mut servo = peripherals.GPIO2;
 //     let ledc = Ledc::new(peripherals.LEDC);
 
 //     let mut hstimer0 = ledc.timer::<HighSpeed>(timer::Number::Timer0);
@@ -225,7 +254,7 @@ fn duty_from_angle(deg: u32, min_duty: u32, duty_gap: u32) -> u16 {
 //             channel0.set_duty_cycle(duty).unwrap();
 //             delay.delay_millis(10);
 //         }
-//         delay.delay_millis(1000);
+//         delay.delay_millis(500);
 //     }
 // }
 
