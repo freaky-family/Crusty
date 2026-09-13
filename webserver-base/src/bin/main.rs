@@ -15,6 +15,7 @@ use esp_hal::timer::timg::TimerGroup;
 use esp_println as _;
 
 use esp_hal::gpio::{Level, Output, OutputConfig};
+use esp_hal::ledc::{HighSpeed, Ledc, channel, timer};
 
 use webserver_html as lib;
 
@@ -50,8 +51,10 @@ async fn main(spawner: Spawner) -> ! {
     let rng = Rng::new();
 
     // LED Task
-    let led = Output::new(peripherals.GPIO2, Level::Low, OutputConfig::default());
-    spawner.must_spawn(lib::led::led_task(led));
+    // let led = Output::new(peripherals.GPIO2, Level::Low, OutputConfig::default());
+    let mut servo: esp_hal::peripherals::GPIO2<'_> = peripherals.GPIO2;
+    let ledc: Ledc<'_> = Ledc::new(peripherals.LEDC);
+    spawner.must_spawn(lib::led::led_task(servo, ledc));
 
     let stack = lib::wifi::start_wifi(radio_init, peripherals.WIFI, rng, &spawner).await;
 
