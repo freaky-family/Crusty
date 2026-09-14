@@ -44,30 +44,24 @@ pub async fn led_task(mut servo: esp_hal::peripherals::GPIO2<'static>, ledc: Led
     // 512 - 102 => 410
     let duty_gap = max_duty - min_duty;
 
-    let mut isHigh: bool = false;
-    let mut oldState: bool = false;
+    let mut is_high: bool = false;
+    let mut old_state: bool = false;
     loop {
         if LED_STATE.load(Ordering::Relaxed) {
-            isHigh = false;
-            if (isHigh != oldState) {
-                oldState = isHigh;
-                for deg in 5..=175 {
-                    let duty = duty_from_angle(deg, min_duty, duty_gap);
-                    channel0.set_duty_cycle(duty).unwrap();
-                    delay.delay_millis(10);
-                }
-                println!("CACA");
+            is_high = false;
+            if (is_high != old_state) {
+                old_state = is_high;
+                let duty = duty_from_angle(175, min_duty, duty_gap);
+                channel0.set_duty_cycle(duty).unwrap();
+                println!("High");
             }
         } else {
-            isHigh = true;
-            if (isHigh != oldState) {
-                oldState = isHigh;
-                for deg in (5..=175).rev() {
-                    let duty = duty_from_angle(deg, min_duty, duty_gap);
-                    channel0.set_duty_cycle(duty).unwrap();
-                    delay.delay_millis(10);
-                }
-                println!("PIPI");
+            is_high = true;
+            if (is_high != old_state) {
+                old_state = is_high;
+                let duty = duty_from_angle(deg, min_duty, duty_gap);
+                channel0.set_duty_cycle(duty).unwrap();
+                println!("Low");
             }
         }
         Timer::after(Duration::from_millis(50)).await;
