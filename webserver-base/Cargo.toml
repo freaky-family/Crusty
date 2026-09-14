@@ -65,7 +65,8 @@ picoserve = { version = "0.17.1", features = ["embassy", "json"] }
 serde = { version = "1.0.228", default-features = false, features = ["derive"] }
 led = "0.3.1"
 embedded-hal = "1.0.0"
-
+ssd1306 = { version = "0.10.0", features = ["async"] }
+embedded-graphics = "0.8.1"
 
 [profile.dev]
 # Rust debug is too slow.

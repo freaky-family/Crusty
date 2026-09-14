@@ -14,9 +14,8 @@ use esp_hal::rng::Rng;
 use esp_hal::timer::timg::TimerGroup;
 use esp_println as _;
 
-use esp_hal::gpio::{Level, Output, OutputConfig};
-use esp_hal::ledc::{HighSpeed, Ledc, channel, timer};
-
+// use esp_hal::gpio::{Level, Output, OutputConfig};
+use esp_hal::ledc::{Ledc};
 use webserver_html as lib;
 
 #[panic_handler]
@@ -43,20 +42,41 @@ async fn main(spawner: Spawner) -> ! {
     esp_rtos::start(timg0.timer0);
 
     info!("Embassy initialized!");
-
     let radio_init = &*lib::mk_static!(
         esp_radio::Controller<'static>,
         esp_radio::init().expect("Failed to initialize Wi-Fi/BLE controller")
     );
     let rng = Rng::new();
 
-    // LED Task
-    // let led = Output::new(peripherals.GPIO2, Level::Low, OutputConfig::default());
-    let mut servo: esp_hal::peripherals::GPIO2<'_> = peripherals.GPIO2;
+    let servo: esp_hal::peripherals::GPIO2<'_> = peripherals.GPIO2;
     let ledc: Ledc<'_> = Ledc::new(peripherals.LEDC);
+    // let i2c_bus: I2c<'_, esp_hal::Async> = I2c::new(
+    //     peripherals.I2C0,
+    //     // I2cConfig is alias of esp_hal::i2c::master::I2c::Config
+    //     I2cConfig::default().with_frequency(Rate::from_khz(400)),
+    // )
+    // .unwrap()
+    // .with_scl(peripherals.GPIO18)
+    // .with_sda(peripherals.GPIO23)
+    // .into_async();
+    let stack = lib::wifi::start_wifi(radio_init, peripherals.WIFI, rng, &spawner).await;
     spawner.must_spawn(lib::led::led_task(servo, ledc));
 
-    let stack = lib::wifi::start_wifi(radio_init, peripherals.WIFI, rng, &spawner).await;
+    // let interface = I2CDisplayInterface::new(i2c_bus);
+    // // // initialize the display
+    // let mut display = Ssd1306Async::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
+    //     .into_buffered_graphics_mode();
+    // display.init().await.unwrap();
+
+    // let text_style = MonoTextStyleBuilder::new()
+    //     .font(&FONT_6X10)
+    //     .text_color(BinaryColor::On)
+    //     .build();
+
+    // Text::with_baseline("Hello, Rust!", Point::new(0, 16), text_style, Baseline::Top)
+    //     .draw(&mut display)
+    //     .unwrap();
+    // display.flush().await.unwrap();
 
     let web_app = lib::web::WebApp::default();
     for id in 0..lib::web::WEB_TASK_POOL_SIZE {

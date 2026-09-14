@@ -7,7 +7,6 @@ use esp_hal::ledc::channel::ChannelIFace;
 use esp_hal::time::Rate;
 use esp_hal::gpio::DriveMode;
 use esp_hal::ledc::timer::TimerIFace;
-use esp_hal::delay::Delay;
 use embedded_hal::pwm::SetDutyCycle;
 
 pub static LED_STATE: AtomicBool = AtomicBool::new(false);
@@ -31,7 +30,7 @@ pub async fn led_task(mut servo: esp_hal::peripherals::GPIO2<'static>, ledc: Led
             drive_mode: DriveMode::PushPull,
         })
         .unwrap();
-    let delay = Delay::new();
+    // let delay = Delay::new();
 
     let max_duty_cycle = channel0.max_duty_cycle() as u32;
 
@@ -44,12 +43,12 @@ pub async fn led_task(mut servo: esp_hal::peripherals::GPIO2<'static>, ledc: Led
     // 512 - 102 => 410
     let duty_gap = max_duty - min_duty;
 
-    let mut is_high: bool = false;
+    let mut is_high: bool;
     let mut old_state: bool = false;
     loop {
         if LED_STATE.load(Ordering::Relaxed) {
             is_high = false;
-            if (is_high != old_state) {
+            if is_high != old_state {
                 old_state = is_high;
                 let duty = duty_from_angle(175, min_duty, duty_gap);
                 channel0.set_duty_cycle(duty).unwrap();
@@ -57,9 +56,9 @@ pub async fn led_task(mut servo: esp_hal::peripherals::GPIO2<'static>, ledc: Led
             }
         } else {
             is_high = true;
-            if (is_high != old_state) {
+            if is_high != old_state {
                 old_state = is_high;
-                let duty = duty_from_angle(deg, min_duty, duty_gap);
+                let duty = duty_from_angle(5, min_duty, duty_gap);
                 channel0.set_duty_cycle(duty).unwrap();
                 println!("Low");
             }
