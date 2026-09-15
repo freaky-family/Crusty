@@ -54,8 +54,9 @@ pub async fn led_task(mut servo: esp_hal::peripherals::GPIO2<'static>, mut servo
     let mut is_high: u8;
     let mut old_state: u8 = 1;
     let mut duty: u16;
+    let mut state: u8;
     loop {
-        let state: u8 = LED_STATE.load(Ordering::Relaxed);
+        state = LED_STATE.load(Ordering::Relaxed);
         if state == 0 {
             is_high = 0;
             if is_high != old_state {
@@ -70,11 +71,20 @@ pub async fn led_task(mut servo: esp_hal::peripherals::GPIO2<'static>, mut servo
             is_high = 1;
             if is_high != old_state {
                 old_state = is_high;
-                duty = duty_from_angle(5, min_duty, duty_gap);
-                channel0.set_duty_cycle(duty).unwrap();
-                channel1.set_duty_cycle(duty).unwrap();
                 println!("WALK");
             }
+            duty = duty_from_angle(5, min_duty, duty_gap);
+            channel0.set_duty_cycle(duty).unwrap();
+            channel1.set_duty_cycle(duty).unwrap();
+            delay.delay_millis(200);
+            duty = duty_from_angle(175, min_duty, duty_gap);
+            channel1.set_duty_cycle(duty).unwrap();
+            delay.delay_millis(200);
+            channel0.set_duty_cycle(duty).unwrap();
+            delay.delay_millis(200);
+            duty = duty_from_angle(5, min_duty, duty_gap);
+            channel1.set_duty_cycle(duty).unwrap();
+            delay.delay_millis(200);
         } else if state == 2 {
             is_high = 2;
             if is_high != old_state {
