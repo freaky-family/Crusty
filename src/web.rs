@@ -3,8 +3,7 @@ use embassy_time::Duration;
 use esp_alloc as _;
 use picoserve::{AppBuilder, AppRouter, Router, response::File, routing};
 
-use core::{include_str, sync::atomic::Ordering};
-use picoserve::response::IntoResponse;
+use core::{include_str};
 
 pub struct Application;
 
@@ -65,10 +64,10 @@ impl Default for WebApp {
     }
 }
 
-
 #[derive(serde::Deserialize)]
-struct LedRequest {
-    is_on: bool,
+
+struct PositionRequest {
+    pos: u8,
 }
 
 #[derive(serde::Serialize)]
@@ -76,8 +75,8 @@ struct LedResponse {
     success: bool,
 }
 
-async fn led_handler(input: picoserve::extract::Json<LedRequest>) -> impl picoserve::response::IntoResponse {
-    crate::led::LED_STATE.store(input.0.is_on, core::sync::atomic::Ordering::Relaxed);
+async fn led_handler(input: picoserve::extract::Json<PositionRequest>) -> impl picoserve::response::IntoResponse {
+    crate::led::LED_STATE.store(input.0.pos, core::sync::atomic::Ordering::Relaxed);
 
     picoserve::response::Json(LedResponse { success: true })
 }

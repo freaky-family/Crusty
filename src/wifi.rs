@@ -8,7 +8,7 @@ use esp_hal::rng::Rng;
 use esp_println as _;
 use esp_println::println;
 use esp_radio::wifi::{
-    ClientConfig, ModeConfig, ScanConfig, WifiController, WifiDevice, WifiEvent, WifiApState, AccessPointConfig
+    ModeConfig, WifiController, WifiDevice, WifiEvent, WifiApState, AccessPointConfig
 };
 
 use crate::mk_static;
@@ -18,7 +18,7 @@ const STATIC_IP: &str = "192.168.13.37/24";
 // Gateway IP eg: GATEWAY_IP="192.168.13.37"
 const GATEWAY_IP: &str = "192.168.13.37";
 
-const PASSWORD: &str = "TEST";
+// const PASSWORD: &str = "TEST";
 const SSID: &str = "Crusty";
 
 
