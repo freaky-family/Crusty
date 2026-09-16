@@ -9,6 +9,7 @@
 use defmt::info;
 use embassy_executor::Spawner;
 use embassy_time::{Duration, Timer};
+use esp_hal::peripherals;
 use esp_hal::{clock::CpuClock};
 use esp_hal::rng::Rng;
 use esp_hal::timer::timg::TimerGroup;
@@ -48,11 +49,19 @@ async fn main(spawner: Spawner) -> ! {
     );
     let rng = Rng::new();
 
-    let servo: esp_hal::peripherals::GPIO2<'_> = peripherals.GPIO2;
-    let servo2 = peripherals.GPIO4;
     let ledc: Ledc<'_> = Ledc::new(peripherals.LEDC);
     let stack = lib::wifi::start_wifi(radio_init, peripherals.WIFI, rng, &spawner).await;
-    spawner.must_spawn(lib::led::led_task(servo, servo2, ledc));
+    let servos = webserver_html::led::Servos {
+        servo1: peripherals.GPIO2, // Left front leg
+        servo2: peripherals.GPIO4,// Left front leg
+        servo3: peripherals.GPIO18, // Left back leg
+        servo4: peripherals.GPIO19, // Left back leg
+        servo5: peripherals.GPIO12, // Right front leg
+        servo6: peripherals.GPIO14, // Right front leg
+        servo7: peripherals.GPIO33, // Right back leg
+        servo8: peripherals.GPIO32 // Right back leg
+    };
+    spawner.must_spawn(lib::led::led_task(servos, ledc));
 
     let web_app = lib::web::WebApp::default();
     for id in 0..lib::web::WEB_TASK_POOL_SIZE {
