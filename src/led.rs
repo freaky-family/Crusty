@@ -132,7 +132,7 @@ pub async fn led_task(mut servos: Servos, ledc: Ledc<'static>) {
                 old_state = is_high;
                 stop(&mut channel0, &mut channel1, &mut channel2, &mut channel3, & mut duty_info);
             }
-            hello(&mut channel0, &mut channel1, & mut duty_info, &delay);
+            hello(&mut channel0, &mut channel1, & mut channel3, & mut duty_info, &delay);
         }
         Timer::after(Duration::from_millis(50)).await;
     }
@@ -155,7 +155,10 @@ fn stop(channel0: & mut channel::Channel<'_, HighSpeed>, channel1:& mut channel:
 }
 
 fn hello(channel0: & mut channel::Channel<'_, HighSpeed>, channel1:& mut channel::Channel<'_, HighSpeed>,
+    channel3:& mut channel::Channel<'_, HighSpeed>,
     duty_info: & mut DutyInfo, delay: &Delay) {
+    duty_info.duty = duty_from_angle(170, duty_info.min_duty, duty_info.duty_gap);
+    channel3.set_duty_cycle(duty_info.duty).unwrap();
     duty_info.duty = duty_from_angle(10, duty_info.min_duty, duty_info.duty_gap);
     channel1.set_duty_cycle(duty_info.duty).unwrap();
     delay.delay_millis(200);
