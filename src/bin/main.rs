@@ -18,7 +18,24 @@ use esp_println as _;
 // use esp_hal::gpio::{Level, Output, OutputConfig};
 use esp_hal::ledc::{Ledc};
 use webserver_html as lib;
+use esp_hal::i2c::master::Config as I2cConfig; // for convenience, importing as alias
+use esp_hal::i2c::master::I2c;
+use esp_hal::time::Rate;
+// OLED
+use ssd1306::{I2CDisplayInterface, Ssd1306Async, prelude::*};
 
+// Embedded Graphics
+use embedded_graphics::{
+    mono_font::{MonoTextStyleBuilder, ascii::FONT_6X10},
+    pixelcolor::BinaryColor,
+    prelude::Point,
+    prelude::*,
+    text::{Baseline, Text},
+};
+use embedded_graphics::{
+    image::{Image, ImageRaw},
+    prelude::*,
+};
 #[panic_handler]
 fn panic(_: &core::panic::PanicInfo) -> ! {
     loop {}
@@ -29,6 +46,14 @@ extern crate alloc;
 // This creates a default app-descriptor required by the esp-idf bootloader.
 // For more information see: <https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/system/app_image_format.html#application-description>
 esp_bootloader_esp_idf::esp_app_desc!();
+
+const IMG_DATA: &[u8] = &[
+    0b00111000,
+    0b01000100,
+    0b01000100,
+    0b00101000,
+    0b11101110,
+];
 
 #[esp_rtos::main]
 async fn main(spawner: Spawner) -> ! {
@@ -48,6 +73,28 @@ async fn main(spawner: Spawner) -> ! {
         esp_radio::init().expect("Failed to initialize Wi-Fi/BLE controller")
     );
     let rng = Rng::new();
+    let i2c_bus = I2c::new(
+        peripherals.I2C0,
+        // I2cConfig is alias of esp_hal::i2c::master::I2c::Config
+        I2cConfig::default().with_frequency(Rate::from_khz(400)),
+    )
+    .unwrap()
+    .with_scl(peripherals.GPIO22)
+    .with_sda(peripherals.GPIO23)
+    .into_async();
+
+    let interface = I2CDisplayInterface::new(i2c_bus);
+    // initialize the display
+    let mut display = Ssd1306Async::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
+        .into_buffered_graphics_mode();
+    display.init().await.unwrap();
+
+    let raw_image = ImageRaw::<BinaryColor>::new(IMG_DATA, 8);
+
+    let image = Image::new(&raw_image, Point::zero());
+
+    image.draw(&mut display).unwrap();
+    display.flush().await.unwrap();
 
     let ledc: Ledc<'_> = Ledc::new(peripherals.LEDC);
     let stack = lib::wifi::start_wifi(radio_init, peripherals.WIFI, rng, &spawner).await;
