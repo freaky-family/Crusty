@@ -2,7 +2,6 @@ use core::sync::atomic::{AtomicU8, Ordering};
 
 use defmt::println;
 use embassy_time::{Duration, Timer};
-use esp_hal::ledc::channel::Number::Channel7;
 use esp_hal::ledc::{HighSpeed, Ledc, channel, timer};
 use esp_hal::ledc::channel::ChannelIFace;
 use esp_hal::time::Rate;
@@ -57,7 +56,7 @@ pub async fn led_task(mut servos: Servos, ledc: Ledc<'static>) {
         .unwrap();
 
     // LF Leg
-    let mut cl3: channel::Channel<'_, HighSpeed> = ledc.channel(channel::Number::Channel0, servos.servo1);
+    let mut cl3: channel::Channel<'_, HighSpeed> = ledc.channel(channel::Number::Channel0, servos.servo1.reborrow());
     cl3
     .configure(channel::config::Config {
         timer: &hstimer0,
@@ -66,7 +65,7 @@ pub async fn led_task(mut servos: Servos, ledc: Ledc<'static>) {
     })
     .unwrap();
 
-    let mut cl1 = ledc.channel(channel::Number::Channel1, servos.servo2);
+    let mut cl1 = ledc.channel(channel::Number::Channel1, servos.servo2.reborrow());
 
     cl1.configure(channel::config::Config {
         timer: &hstimer0,
@@ -220,9 +219,6 @@ fn walk(cl3: & mut channel::Channel<'_, HighSpeed>, cl1:& mut channel::Channel<'
     cl4:& mut channel::Channel<'_, HighSpeed>, cl2:& mut channel::Channel<'_, HighSpeed>,
     cr4:& mut channel::Channel<'_, HighSpeed>, cr2:& mut channel::Channel<'_, HighSpeed>,
     duty_info: & mut DutyInfo, delay: &Delay) {
-
-
-
 
     set_duty_on_channel(cr3, 135, duty_info);
     set_duty_on_channel(cl3, 0, duty_info);

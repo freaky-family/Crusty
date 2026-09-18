@@ -67,6 +67,7 @@ led = "0.3.1"
 embedded-hal = "1.0.0"
 ssd1306 = { version = "0.10.0", features = ["async"] }
 embedded-graphics = "0.8.1"
+tinybmp = "0.7.0"
 
 [profile.dev]
 # Rust debug is too slow.

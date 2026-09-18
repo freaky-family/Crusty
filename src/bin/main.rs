@@ -17,7 +17,7 @@ use esp_println as _;
 
 // use esp_hal::gpio::{Level, Output, OutputConfig};
 use esp_hal::ledc::{Ledc};
-use webserver_html as lib;
+use webserver_html::{self as lib, bitmap};
 use esp_hal::i2c::master::Config as I2cConfig; // for convenience, importing as alias
 use esp_hal::i2c::master::I2c;
 use esp_hal::time::Rate;
@@ -40,7 +40,6 @@ use embedded_graphics::{
 fn panic(_: &core::panic::PanicInfo) -> ! {
     loop {}
 }
-
 extern crate alloc;
 
 // This creates a default app-descriptor required by the esp-idf bootloader.
@@ -89,9 +88,12 @@ async fn main(spawner: Spawner) -> ! {
         .into_buffered_graphics_mode();
     display.init().await.unwrap();
 
-    let raw_image = ImageRaw::<BinaryColor>::new(IMG_DATA, 8);
+    // let raw_image = ImageRaw::<BinaryColor>::new(bitmap::LCD_BITMAP, 8);
+    let bmp_data = include_bytes!("../bmo1.bmp");
+    let bmp = tinybmp::Bmp::from_slice(bmp_data).unwrap();
 
-    let image = Image::new(&raw_image, Point::zero());
+    // usual code:
+    let image = Image::new(&bmp, Point::new(0, 0));
 
     image.draw(&mut display).unwrap();
     display.flush().await.unwrap();
