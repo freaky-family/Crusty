@@ -4,7 +4,6 @@
 pub mod web;
 pub mod wifi;
 pub mod led;
-pub mod bitmap;
 
 #[macro_export]
 macro_rules! mk_static {

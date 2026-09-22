@@ -17,7 +17,7 @@ use esp_println as _;
 
 // use esp_hal::gpio::{Level, Output, OutputConfig};
 use esp_hal::ledc::{Ledc};
-use webserver_html::{self as lib, bitmap};
+use webserver_html::{self as lib};
 use esp_hal::i2c::master::Config as I2cConfig; // for convenience, importing as alias
 use esp_hal::i2c::master::I2c;
 use esp_hal::time::Rate;
@@ -26,15 +26,9 @@ use ssd1306::{I2CDisplayInterface, Ssd1306Async, prelude::*};
 
 // Embedded Graphics
 use embedded_graphics::{
-    mono_font::{MonoTextStyleBuilder, ascii::FONT_6X10},
-    pixelcolor::BinaryColor,
     prelude::Point,
     prelude::*,
-    text::{Baseline, Text},
-};
-use embedded_graphics::{
-    image::{Image, ImageRaw},
-    prelude::*,
+    image::{Image},
 };
 #[panic_handler]
 fn panic(_: &core::panic::PanicInfo) -> ! {
@@ -45,14 +39,6 @@ extern crate alloc;
 // This creates a default app-descriptor required by the esp-idf bootloader.
 // For more information see: <https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/system/app_image_format.html#application-description>
 esp_bootloader_esp_idf::esp_app_desc!();
-
-const IMG_DATA: &[u8] = &[
-    0b00111000,
-    0b01000100,
-    0b01000100,
-    0b00101000,
-    0b11101110,
-];
 
 #[esp_rtos::main]
 async fn main(spawner: Spawner) -> ! {

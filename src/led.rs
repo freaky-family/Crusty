@@ -29,16 +29,7 @@ pub struct Servos {
 //     pub cl1: channel::Channel<'_, HighSpeed>,
 // }
 
-enum LegNb {
-    LF,
-    RF,
-    LB,
-    RB
-}
-
 struct DutyInfo {
-    pub max_duty_cycle: u32,
-    pub max_duty: u32,
     pub min_duty: u32,
     pub duty_gap: u32,
     pub duty: u16
@@ -136,7 +127,7 @@ pub async fn led_task(mut servos: Servos, ledc: Ledc<'static>) {
     let duty_gap = max_duty - min_duty;
 
     let mut duty_info = DutyInfo {
-        max_duty_cycle: max_duty_cycle, max_duty: max_duty, min_duty:min_duty, duty_gap: duty_gap, duty: 0
+        min_duty:min_duty, duty_gap: duty_gap, duty: 0
     };
     let mut is_high: u8;
     let mut old_state: u8 = 1;
@@ -147,9 +138,9 @@ pub async fn led_task(mut servos: Servos, ledc: Ledc<'static>) {
             is_high = 0;
             if is_high != old_state {
                 old_state = is_high;
-                stop(& mut cl3, & mut cl1, & mut cr3, & mut cr1, & mut cl4,
-                & mut cr4, & mut cl2, & mut cr2, & mut duty_info);
                 println!("STOP");
+                stop(& mut cl3, & mut cl1, & mut cr3, & mut cr1, & mut cl4,
+                    & mut cr4, & mut cl2, & mut cr2, & mut duty_info);
             }
         } else if state == 1 {
             is_high = 1;
@@ -171,6 +162,16 @@ pub async fn led_task(mut servos: Servos, ledc: Ledc<'static>) {
                 & mut cr4, & mut cl2, & mut cr2, & mut duty_info);
             }
             hello(&mut cl3, &mut cl1, & mut cr1, & mut duty_info, &delay);
+        } else if state == 3 {
+            is_high = 3;
+            if is_high != old_state {
+                println!("TURN RIGHT");
+                old_state = is_high;
+                stop(& mut cl3, & mut cl1, & mut cr3, & mut cr1, & mut cl4,
+                & mut cr4, & mut cl2, & mut cr2, & mut duty_info);
+            }
+            turn_right(&mut cl3, &mut cl1, &mut cr3, &mut cr1, &mut cl4,
+            &mut cl2, &mut cr4, &mut cr2, &mut duty_info, &delay);
         }
         Timer::after(Duration::from_millis(50)).await;
     }
@@ -186,32 +187,27 @@ fn stop(cl3: & mut channel::Channel<'_, HighSpeed>, cl1:& mut channel::Channel<'
     cl4:& mut channel::Channel<'_, HighSpeed>, cr4:& mut channel::Channel<'_, HighSpeed>,
     cl2:& mut channel::Channel<'_, HighSpeed>, cr2:& mut channel::Channel<'_, HighSpeed>,
     duty_info: & mut DutyInfo) {
-    duty_info.duty = duty_from_angle(0, duty_info.min_duty, duty_info.duty_gap);
-    cl3.set_duty_cycle(duty_info.duty).unwrap();
-    cr4.set_duty_cycle(duty_info.duty).unwrap();
-    duty_info.duty = duty_from_angle(180, duty_info.min_duty, duty_info.duty_gap);
-    cr3.set_duty_cycle(duty_info.duty).unwrap();
-    cl4.set_duty_cycle(duty_info.duty).unwrap();
-    duty_info.duty = duty_from_angle(90, duty_info.min_duty, duty_info.duty_gap);
-    cl1.set_duty_cycle(duty_info.duty).unwrap();
-    cr1.set_duty_cycle(duty_info.duty).unwrap();
-    cl2.set_duty_cycle(duty_info.duty).unwrap();
-    cr2.set_duty_cycle(duty_info.duty).unwrap();
+    set_duty_on_channel(cl3, 0, duty_info);
+    set_duty_on_channel(cr4, 0, duty_info);
+
+    set_duty_on_channel(cr3, 180, duty_info);
+    set_duty_on_channel(cl4, 180, duty_info);
+
+    set_duty_on_channel(cl1, 90, duty_info);
+    set_duty_on_channel(cr1, 90, duty_info);
+    set_duty_on_channel(cl2, 90, duty_info);
+    set_duty_on_channel(cr2, 90, duty_info);
 }
 
 fn hello(cl3: & mut channel::Channel<'_, HighSpeed>, cl1:& mut channel::Channel<'_, HighSpeed>,
     cr1:& mut channel::Channel<'_, HighSpeed>,
     duty_info: & mut DutyInfo, delay: &Delay) {
-    duty_info.duty = duty_from_angle(170, duty_info.min_duty, duty_info.duty_gap);
-    cr1.set_duty_cycle(duty_info.duty).unwrap();
-    duty_info.duty = duty_from_angle(10, duty_info.min_duty, duty_info.duty_gap);
-    cl1.set_duty_cycle(duty_info.duty).unwrap();
+    set_duty_on_channel(cr1, 170, duty_info);
+    set_duty_on_channel(cl1, 10, duty_info);
     delay.delay_millis(200);
-    duty_info.duty = duty_from_angle(140, duty_info.min_duty, duty_info.duty_gap);
-    cl3.set_duty_cycle(duty_info.duty).unwrap();
+    set_duty_on_channel(cl3, 140, duty_info);
     delay.delay_millis(200);
-    duty_info.duty = duty_from_angle(175, duty_info.min_duty, duty_info.duty_gap);
-    cl3.set_duty_cycle(duty_info.duty).unwrap();
+    set_duty_on_channel(cl3, 175, duty_info);
 }
 
 fn walk(cl3: & mut channel::Channel<'_, HighSpeed>, cl1:& mut channel::Channel<'_, HighSpeed>,
@@ -243,6 +239,34 @@ fn walk(cl3: & mut channel::Channel<'_, HighSpeed>, cl1:& mut channel::Channel<'
     set_duty_on_channel(cr1, 90, duty_info);
     delay.delay_millis(200);
 
+}
+
+fn turn_right(cl3: & mut channel::Channel<'_, HighSpeed>, cl1:& mut channel::Channel<'_, HighSpeed>,
+    cr3:& mut channel::Channel<'_, HighSpeed>, cr1:& mut channel::Channel<'_, HighSpeed>,
+    cl4:& mut channel::Channel<'_, HighSpeed>, cl2:& mut channel::Channel<'_, HighSpeed>,
+    cr4:& mut channel::Channel<'_, HighSpeed>, cr2:& mut channel::Channel<'_, HighSpeed>,
+    duty_info: & mut DutyInfo, delay: &Delay) {
+
+    set_duty_on_channel(cr3, 180, duty_info);
+    set_duty_on_channel(cl3, 45, duty_info);
+    set_duty_on_channel(cl4, 180, duty_info);
+    delay.delay_millis(200);
+    set_duty_on_channel(cr1, 180, duty_info);
+    set_duty_on_channel(cl1, 0, duty_info);
+    set_duty_on_channel(cl2, 135, duty_info);
+    set_duty_on_channel(cr4, 45, duty_info);
+    delay.delay_millis(200);
+    set_duty_on_channel(cl3, 0, duty_info);
+    set_duty_on_channel(cr3, 135, duty_info);
+    set_duty_on_channel(cr2, 45, duty_info);
+    set_duty_on_channel(cr4, 0, duty_info);
+    delay.delay_millis(200);
+    set_duty_on_channel(cl4, 45, duty_info);
+    set_duty_on_channel(cr2, 90, duty_info);
+    set_duty_on_channel(cl1, 90, duty_info);
+    set_duty_on_channel(cr1, 90, duty_info);
+    set_duty_on_channel(cl2, 90, duty_info);
+    delay.delay_millis(200);
 }
 
 fn set_duty_on_channel(channel: & mut channel::Channel<'_, HighSpeed>, deg: u32, duty_info: & mut DutyInfo) {
