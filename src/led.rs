@@ -172,6 +172,16 @@ pub async fn led_task(mut servos: Servos, ledc: Ledc<'static>) {
             }
             turn_right(&mut cl3, &mut cl1, &mut cr3, &mut cr1, &mut cl4,
             &mut cl2, &mut cr4, &mut cr2, &mut duty_info, &delay);
+        } else if state == 4 {
+            is_high = 4;
+            if is_high != old_state {
+                println!("TURN RIGHT");
+                old_state = is_high;
+                stop(& mut cl3, & mut cl1, & mut cr3, & mut cr1, & mut cl4,
+                & mut cr4, & mut cl2, & mut cr2, & mut duty_info);
+            }
+            turn_left(&mut cl3, &mut cl1, &mut cr3, &mut cr1, &mut cl4,
+            &mut cl2, &mut cr4, &mut cr2, &mut duty_info, &delay);
         }
         Timer::after(Duration::from_millis(50)).await;
     }
@@ -266,6 +276,34 @@ fn turn_right(cl3: & mut channel::Channel<'_, HighSpeed>, cl1:& mut channel::Cha
     set_duty_on_channel(cl1, 90, duty_info);
     set_duty_on_channel(cr1, 90, duty_info);
     set_duty_on_channel(cl2, 90, duty_info);
+    delay.delay_millis(200);
+}
+
+fn turn_left(cl3: & mut channel::Channel<'_, HighSpeed>, cl1:& mut channel::Channel<'_, HighSpeed>,
+    cr3:& mut channel::Channel<'_, HighSpeed>, cr1:& mut channel::Channel<'_, HighSpeed>,
+    cl4:& mut channel::Channel<'_, HighSpeed>, cl2:& mut channel::Channel<'_, HighSpeed>,
+    cr4:& mut channel::Channel<'_, HighSpeed>, cr2:& mut channel::Channel<'_, HighSpeed>,
+    duty_info: & mut DutyInfo, delay: &Delay) {
+
+    set_duty_on_channel(cl3, 0, duty_info);
+    set_duty_on_channel(cr3, 135, duty_info);
+    set_duty_on_channel(cr4, 0, duty_info);
+    delay.delay_millis(200);
+    set_duty_on_channel(cl1, 0, duty_info);
+    set_duty_on_channel(cr1, 180, duty_info);
+    set_duty_on_channel(cr2, 45, duty_info);
+    set_duty_on_channel(cl4, 135, duty_info);
+    delay.delay_millis(200);
+    set_duty_on_channel(cr3, 180, duty_info);
+    set_duty_on_channel(cl3, 45, duty_info);
+    set_duty_on_channel(cl2, 135, duty_info);
+    set_duty_on_channel(cl4, 180, duty_info);
+    delay.delay_millis(200);
+    set_duty_on_channel(cr4, 135, duty_info);
+    set_duty_on_channel(cl2, 90, duty_info);
+    set_duty_on_channel(cr1, 90, duty_info);
+    set_duty_on_channel(cl1, 90, duty_info);
+    set_duty_on_channel(cr2, 90, duty_info);
     delay.delay_millis(200);
 }
 
