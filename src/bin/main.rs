@@ -75,10 +75,9 @@ async fn main(spawner: Spawner) -> ! {
     display.init().await.unwrap();
 
     // let raw_image = ImageRaw::<BinaryColor>::new(bitmap::LCD_BITMAP, 8);
-    let bmp_data = include_bytes!("../bmo1.bmp");
+    let bmp_data = include_bytes!("../bmo2.bmp");
     let bmp = tinybmp::Bmp::from_slice(bmp_data).unwrap();
 
-    // usual code:
     let image = Image::new(&bmp, Point::new(0, 0));
 
     image.draw(&mut display).unwrap();
