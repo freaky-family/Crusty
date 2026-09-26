@@ -12,7 +12,7 @@ use esp_hal::time::Rate;
 use embedded_graphics::{image::Image, prelude::Point, prelude::*};
 use esp_hal::delay::Delay;
 use esp_hal::i2c::master::I2c;
-use ssd1306::{I2CDisplayInterface, Ssd1306Async, prelude::*};
+use ssd1306::{Ssd1306Async, prelude::*};
 
 pub static LED_STATE: AtomicU8 = AtomicU8::new(0);
 
