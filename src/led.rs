@@ -45,7 +45,6 @@ pub struct Display {
         DisplaySize128x64,
         ssd1306::mode::BufferedGraphicsModeAsync<DisplaySize128x64>,
     >,
-    // pub image: Image<'static, tinybmp::Bmp<'static, embedded_graphics::pixelcolor::BinaryColor>>
 }
 
 #[embassy_executor::task]
