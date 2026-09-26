@@ -1,9 +1,9 @@
 #![no_std]
 #![feature(impl_trait_in_assoc_type)]
 
+pub mod led;
 pub mod web;
 pub mod wifi;
-pub mod led;
 
 #[macro_export]
 macro_rules! mk_static {

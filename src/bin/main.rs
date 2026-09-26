@@ -7,28 +7,25 @@
 )]
 
 use defmt::info;
+use defmt::println;
 use embassy_executor::Spawner;
 use embassy_time::{Duration, Timer};
-use esp_hal::{clock::CpuClock};
+use esp_hal::clock::CpuClock;
 use esp_hal::rng::Rng;
 use esp_hal::timer::timg::TimerGroup;
 use esp_println as _;
 
 // use esp_hal::gpio::{Level, Output, OutputConfig};
-use esp_hal::ledc::{Ledc};
-use webserver_html::{self as lib};
 use esp_hal::i2c::master::Config as I2cConfig; // for convenience, importing as alias
 use esp_hal::i2c::master::I2c;
+use esp_hal::ledc::Ledc;
 use esp_hal::time::Rate;
+use webserver_html::{self as lib};
 // OLED
 use ssd1306::{I2CDisplayInterface, Ssd1306Async, prelude::*};
 
 // Embedded Graphics
-use embedded_graphics::{
-    prelude::Point,
-    prelude::*,
-    image::{Image},
-};
+use embedded_graphics::{image::Image, prelude::Point, prelude::*};
 #[panic_handler]
 fn panic(_: &core::panic::PanicInfo) -> ! {
     loop {}
@@ -69,32 +66,41 @@ async fn main(spawner: Spawner) -> ! {
 
     let interface = I2CDisplayInterface::new(i2c_bus);
     // initialize the display
-    let mut display = Ssd1306Async::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
+    let mut display: Ssd1306Async<
+        I2CInterface<I2c<'_, esp_hal::Async>>,
+        DisplaySize128x64,
+        ssd1306::mode::BufferedGraphicsModeAsync<DisplaySize128x64>,
+    > = Ssd1306Async::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
         .into_buffered_graphics_mode();
     display.init().await.unwrap();
 
     // let raw_image = ImageRaw::<BinaryColor>::new(bitmap::LCD_BITMAP, 8);
-    let bmp_data = include_bytes!("../bmo2.bmp");
+    let bmp_data: &[u8; _] = include_bytes!("../bmo1.bmp");
     let bmp = tinybmp::Bmp::from_slice(bmp_data).unwrap();
 
-    let image = Image::new(&bmp, Point::new(0, 0));
-
+    let image: Image<'_, tinybmp::Bmp<'_, embedded_graphics::pixelcolor::BinaryColor>> =
+        Image::new(&bmp, Point::new(0, 0));
     image.draw(&mut display).unwrap();
     display.flush().await.unwrap();
+    // let temp_bmp = tinybmp::Bmp::from_slice(bmp_data).unwrap();
+    let displayinfo = lib::led::Display {
+        display: display,
+        bmp: bmp,
+    };
 
     let ledc: Ledc<'_> = Ledc::new(peripherals.LEDC);
     let stack = lib::wifi::start_wifi(radio_init, peripherals.WIFI, rng, &spawner).await;
     let servos = webserver_html::led::Servos {
-        servo1: peripherals.GPIO2, // Left front leg
-        servo2: peripherals.GPIO4,// Left front leg
+        servo1: peripherals.GPIO2,  // Left front leg
+        servo2: peripherals.GPIO4,  // Left front leg
         servo3: peripherals.GPIO18, // Left back leg
         servo4: peripherals.GPIO19, // Left back leg
         servo5: peripherals.GPIO12, // Right front leg
         servo6: peripherals.GPIO14, // Right front leg
         servo7: peripherals.GPIO33, // Right back leg
-        servo8: peripherals.GPIO32 // Right back leg
+        servo8: peripherals.GPIO32, // Right back leg
     };
-    spawner.must_spawn(lib::led::led_task(servos, ledc));
+    spawner.must_spawn(lib::led::led_task(servos, ledc, displayinfo));
 
     let web_app = lib::web::WebApp::default();
     for id in 0..lib::web::WEB_TASK_POOL_SIZE {

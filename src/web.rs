@@ -3,7 +3,7 @@ use embassy_time::Duration;
 use esp_alloc as _;
 use picoserve::{AppBuilder, AppRouter, Router, response::File, routing};
 
-use core::{include_str};
+use core::include_str;
 
 pub struct Application;
 
@@ -75,7 +75,9 @@ struct LedResponse {
     success: bool,
 }
 
-async fn led_handler(input: picoserve::extract::Json<PositionRequest>) -> impl picoserve::response::IntoResponse {
+async fn led_handler(
+    input: picoserve::extract::Json<PositionRequest>,
+) -> impl picoserve::response::IntoResponse {
     crate::led::LED_STATE.store(input.0.pos, core::sync::atomic::Ordering::Relaxed);
 
     picoserve::response::Json(LedResponse { success: true })

@@ -8,7 +8,7 @@ use esp_hal::rng::Rng;
 use esp_println as _;
 use esp_println::println;
 use esp_radio::wifi::{
-    ModeConfig, WifiController, WifiDevice, WifiEvent, WifiApState, AccessPointConfig
+    AccessPointConfig, ModeConfig, WifiApState, WifiController, WifiDevice, WifiEvent,
 };
 
 use crate::mk_static;
@@ -20,7 +20,6 @@ const GATEWAY_IP: &str = "192.168.13.37";
 
 // const PASSWORD: &str = "TEST";
 const SSID: &str = "Crusty";
-
 
 #[embassy_executor::task]
 async fn connection(mut controller: WifiController<'static>) {
@@ -38,10 +37,8 @@ async fn connection(mut controller: WifiController<'static>) {
 
         if !matches!(controller.is_started(), Ok(true)) {
             let client_config = ModeConfig::AccessPoint(
-                AccessPointConfig::default()
-                    .with_ssid(SSID.into())
-                    // .with_password(PASSWORD.into())
-                    // .with_auth_method(esp_radio::wifi::AuthMethod::Wpa2Personal),
+                AccessPointConfig::default().with_ssid(SSID.into()), // .with_password(PASSWORD.into())
+                                                                     // .with_auth_method(esp_radio::wifi::AuthMethod::Wpa2Personal),
             );
             controller.set_config(&client_config).unwrap();
             println!("Starting wifi");
