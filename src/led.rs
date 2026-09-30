@@ -45,6 +45,7 @@ pub struct Display {
         DisplaySize128x64,
         ssd1306::mode::BufferedGraphicsModeAsync<DisplaySize128x64>,
     >,
+    // pub image: Image<'static, tinybmp::Bmp<'static, embedded_graphics::pixelcolor::BinaryColor>>
 }
 
 #[embassy_executor::task]
@@ -148,7 +149,7 @@ async fn set_position(
         *is_high = 1;
         if is_high != old_state {
             *old_state = *is_high;
-            display.bmp = tinybmp::Bmp::from_slice(include_bytes!("./bmo2.bmp")).unwrap();
+            display.bmp = tinybmp::Bmp::from_slice(include_bytes!("./bmo4.bmp")).unwrap();
             let image: Image<'_, tinybmp::Bmp<'_, embedded_graphics::pixelcolor::BinaryColor>> =
                 Image::new(&display.bmp, Point::new(0, 0));
             image.draw(&mut display.display).unwrap();
@@ -161,6 +162,11 @@ async fn set_position(
         if is_high != old_state {
             println!("HELLO");
             *old_state = *is_high;
+            display.bmp = tinybmp::Bmp::from_slice(include_bytes!("./bmo2.bmp")).unwrap();
+            let image: Image<'_, tinybmp::Bmp<'_, embedded_graphics::pixelcolor::BinaryColor>> =
+                Image::new(&display.bmp, Point::new(0, 0));
+            image.draw(&mut display.display).unwrap();
+            display.display.flush().await.unwrap();
             stop(cl, cr, duty_info);
         }
         hello(cl, cr, duty_info, &delay);
@@ -169,22 +175,37 @@ async fn set_position(
         if is_high != old_state {
             println!("TURN RIGHT");
             *old_state = *is_high;
+            display.bmp = tinybmp::Bmp::from_slice(include_bytes!("./bmo5.bmp")).unwrap();
+            let image: Image<'_, tinybmp::Bmp<'_, embedded_graphics::pixelcolor::BinaryColor>> =
+                Image::new(&display.bmp, Point::new(0, 0));
+            image.draw(&mut display.display).unwrap();
+            display.display.flush().await.unwrap();
             stop(cl, cr, duty_info);
         }
         turn_right(cl, cr, duty_info, delay);
     } else if state == 4 {
         *is_high = 4;
         if is_high != old_state {
-            println!("TURN RIGHT");
+            println!("TURN LEFT");
             *old_state = *is_high;
+            // display.bmp = tinybmp::Bmp::from_slice(include_bytes!("./bmo6.bmp")).unwrap();
+            // let image: Image<'_, tinybmp::Bmp<'_, embedded_graphics::pixelcolor::BinaryColor>> =
+            //     Image::new(&display.bmp, Point::new(0, 0));
+            // image.draw(&mut display.display).unwrap();
+            // display.display.flush().await.unwrap();
             stop(cl, cr, duty_info);
         }
         turn_left(cl, cr, duty_info, delay);
     } else if state == 5 {
-        *is_high = 4;
+        *is_high = 5;
         if is_high != old_state {
             println!("freaky");
             *old_state = *is_high;
+            display.bmp = tinybmp::Bmp::from_slice(include_bytes!("./bmo3.bmp")).unwrap();
+            let image: Image<'_, tinybmp::Bmp<'_, embedded_graphics::pixelcolor::BinaryColor>> =
+                Image::new(&display.bmp, Point::new(0, 0));
+            image.draw(&mut display.display).unwrap();
+            display.display.flush().await.unwrap();
             stop(cl, cr, duty_info);
         }
         freaky(cl, cr, duty_info, delay);
@@ -221,9 +242,9 @@ fn hello(
     set_duty_on_channel(&mut cr[ID1], 170, duty_info);
     set_duty_on_channel(&mut cl[ID1], 10, duty_info);
     delay.delay_millis(200);
-    set_duty_on_channel(&mut cl[ID3], 140, duty_info);
+    set_duty_on_channel(&mut cl[ID3], 135, duty_info);
     delay.delay_millis(200);
-    set_duty_on_channel(&mut cl[ID3], 175, duty_info);
+    set_duty_on_channel(&mut cl[ID3], 165, duty_info);
 }
 
 fn walk(
