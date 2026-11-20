@@ -2,6 +2,19 @@
 
 Baby Crusty is a quadrupede robot with remote control coded in rust with the esp_hal lib, it's inspired by the sesame robot from Dorian Borian
 
+## Building from source
+
+In the ```.cargo/config.toml``` file you must add ```[build] rustflags = [ "-C" "link-arg=-nostartfiles",]
+target = "xtensa-esp32-none-elf"``` for it to build correctly.
+After that you can run ```cargo build``` to build the binary
+
+## Flashing and running the binary
+
+In the ```.cargo/config.toml``` file you will have to add this section ```
+[target.xtensa-esp32-none-elf]
+runner = "espflash flash --monitor --chip esp32 --log-format defmt"```
+Now you can just type: ```cargo run --release``` and the program will be flashed and run on the ESP32
+
 ## Features
 
 - 8 servo motors (2 for each leg) 8 DOF
